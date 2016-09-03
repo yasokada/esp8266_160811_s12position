@@ -1,7 +1,16 @@
 #include <ESP8266WiFi.h>
 #include <stdint.h>
 
+extern "C" {
+#include "user_interface.h"
+}
+
 /*
+ * v0.5 2016 Sep. 3
+ *   - obtain TOUT voltage
+ *     + obtain ADvalue value
+ *     + include "user_interface"
+ * v0.4 2016 Sep. 3
  *   - remove debug pring for millis()
  *   - change 30msec delay to 60msec (about 2cm movement)
  *   - change 300msec delay to 30msec (about 1cm movement)
@@ -40,6 +49,13 @@ void loop() {
     digitalWrite(kRelayPin, HIGH);
     delay(60); // msec
     digitalWrite(kRelayPin, LOW);
+  } else if (cnt == 2) {
+    uint ADvalue;
+    ADvalue = system_adc_read();
+    float voltage = ADvalue * 1.0 / 1024;
+
+    Serial.print(voltage);
+    Serial.println();
   }
 
   cnt++;
