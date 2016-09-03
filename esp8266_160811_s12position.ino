@@ -1,11 +1,15 @@
 #include <ESP8266WiFi.h>
 #include <stdint.h>
+#include "esp8266_160602_udpTxToLogger.h"
 
 extern "C" {
 #include "user_interface.h"
 }
 
 /*
+ * v0.6 2016 Sep. 3
+ *   - add outputToLogger()
+ *   - add [esp8266_160602_udpTxToLogger]
  * v0.5 2016 Sep. 3
  *   - obtain TOUT voltage
  *     + obtain ADvalue value
@@ -29,6 +33,7 @@ extern "C" {
 
 static const int kRelayPin = 14;
 static const int kCount_interval = 3;
+static int s_totalCount = 0;
 
 void setup() {
   WiFi.disconnect();
@@ -36,6 +41,20 @@ void setup() {
 
   pinMode(kRelayPin, OUTPUT);
   digitalWrite(kRelayPin, LOW);
+
+  WiFi_setup();
+  WiFi_printConnectionInfo();
+}
+
+void outputToLogger(int idx_st1,float val) {
+  char szbuf[200];
+  int whl, frac; // whole and fractional parts
+
+  whl = (int)val;
+  frac = (int)(val*100) % 100;
+  sprintf(szbuf, "%d,%d.%02d\r\n", idx_st1, whl, frac);
+
+  WiFi_txMessage(szbuf);
 }
 
 void loop() {
@@ -54,6 +73,8 @@ void loop() {
     ADvalue = system_adc_read();
     float voltage = ADvalue * 1.0 / 1024;
 
+    s_totalCount++;
+    outputToLogger(s_totalCount, voltage);
     Serial.print(voltage);
     Serial.println();
   }
