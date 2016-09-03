@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 /*
+ *   - remove debug pring for millis()
  *   - change 30msec delay to 60msec (about 2cm movement)
  *   - change 300msec delay to 30msec (about 1cm movement)
  *     + did not move
@@ -36,15 +37,9 @@ void loop() {
   Serial.println(szbuf);
 
   if (cnt == 0) {
-    mils = millis();
-    Serial.println(mils);    
-
     digitalWrite(kRelayPin, HIGH);
     delay(60); // msec
     digitalWrite(kRelayPin, LOW);
-
-    mils = millis();
-    Serial.println(mils);    
   }
 
   cnt++;
