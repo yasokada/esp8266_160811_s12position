@@ -7,6 +7,8 @@ extern "C" {
 }
 
 /*
+ * v0.7 2016 Sep. 18
+ *   - change 60msec delay to 120msec 
  * v0.6 2016 Sep. 3
  *   - add outputToLogger()
  *   - add [esp8266_160602_udpTxToLogger]
@@ -66,7 +68,8 @@ void loop() {
 
   if (cnt == 0) {
     digitalWrite(kRelayPin, HIGH);
-    delay(60); // msec
+//    delay(60); // msec
+    delay(120); // msec
     digitalWrite(kRelayPin, LOW);
   } else if (cnt == 2) {
     uint ADvalue;
