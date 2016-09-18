@@ -7,6 +7,9 @@ extern "C" {
 }
 
 /*
+ * v0.8 2016 Sep. 18
+ *   - outputToLogger() outputs [distance_cm]
+ *   - add toDistance_cm()
  * v0.7 2016 Sep. 18
  *   - change 60msec delay to 120msec 
  * v0.6 2016 Sep. 3
@@ -48,14 +51,30 @@ void setup() {
   WiFi_printConnectionInfo();
 }
 
-void outputToLogger(int idx_st1,float val) {
+float toDistance_cm(float voltage)
+{
+  // for 50cm to 140cm
+  // obtained from measurement on Sep. 18, 2016
+  float res = -390.01 * voltage + 287.51;
+  return res;
+}
+
+void outputToLogger(int idx_st1,float voltage) {
   char szbuf[200];
   int whl, frac; // whole and fractional parts
+  int pos = 0;
+  float dist_cm;
 
-  whl = (int)val;
-  frac = (int)(val*100) % 100;
-  sprintf(szbuf, "%d,%d.%02d\r\n", idx_st1, whl, frac);
+  dist_cm = toDistance_cm(voltage);
 
+  whl = (int)voltage;
+  frac = (int)(voltage * 1000) % 1000;
+  pos = sprintf(szbuf, "%d,%d.%03d", idx_st1, whl, frac);
+
+  whl = (int)dist_cm;
+  frac = (int)(dist_cm * 100) % 100;
+  pos = sprintf(&szbuf[pos], ",%d.%02d\r\n", whl, frac);
+  
   WiFi_txMessage(szbuf);
 }
 
@@ -68,7 +87,6 @@ void loop() {
 
   if (cnt == 0) {
     digitalWrite(kRelayPin, HIGH);
-//    delay(60); // msec
     delay(120); // msec
     digitalWrite(kRelayPin, LOW);
   } else if (cnt == 2) {
