@@ -1,12 +1,15 @@
 #include <ESP8266WiFi.h>
 #include <stdint.h>
 #include "esp8266_160602_udpTxToLogger.h"
+#include <float.h>
 
 extern "C" {
 #include "user_interface.h"
 }
 
 /*
+ * v0.9 2016 Sep. 18
+ *   - add measureExcludingMinMax()
  * v0.8 2016 Sep. 18
  *   - outputToLogger() outputs [distance_cm]
  *   - add toDistance_cm()
@@ -39,6 +42,7 @@ extern "C" {
 static const int kRelayPin = 14;
 static const int kCount_interval = 3;
 static int s_totalCount = 0;
+static const int kCount_average = 7;
 
 void setup() {
   WiFi.disconnect();
@@ -78,6 +82,38 @@ void outputToLogger(int idx_st1,float voltage) {
   WiFi_txMessage(szbuf);
 }
 
+float measureExcludingMinMax(void)
+{
+  float array[kCount_average];
+  uint ADvalue;
+
+  for(int loop=0; loop < kCount_average; loop++) {
+    ADvalue = system_adc_read();
+    array[loop] = ADvalue * 1.0 / 1024;
+    delay(5); // msec
+  }
+
+  float fmin = FLT_MAX;
+  float fmax = (- FLT_MAX);
+  float fsum = 0.0;
+  for(int idx=0; idx < kCount_average; idx++) {
+    if (fmin > array[idx]) {
+      fmin = array[idx];
+    }
+    if (fmax < array[idx]) {
+      fmax = array[idx];
+    }
+    fsum += array[idx];
+  }
+  
+  // excluding min and max for average
+  fsum -= fmin;
+  fsum -= fmax;  
+  float voltage = fsum / (float)(kCount_average - 1 - 1); // 1:min, 1:max
+  
+  return voltage;
+}
+
 void loop() {
   char szbuf[] = "hello";
   static int8_t cnt = 0;
@@ -90,10 +126,7 @@ void loop() {
     delay(120); // msec
     digitalWrite(kRelayPin, LOW);
   } else if (cnt == 2) {
-    uint ADvalue;
-    ADvalue = system_adc_read();
-    float voltage = ADvalue * 1.0 / 1024;
-
+    float voltage = measureExcludingMinMax();
     s_totalCount++;
     outputToLogger(s_totalCount, voltage);
     Serial.print(voltage);
